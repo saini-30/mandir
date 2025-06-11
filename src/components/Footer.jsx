@@ -1,5 +1,6 @@
-import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Youtube, Clock } from 'lucide-react';
+import React from 'react';
 import { motion } from 'framer-motion';
+import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Youtube, Clock } from 'lucide-react';
 
 const Footer = () => {
   const quickLinks = [
@@ -32,7 +33,7 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* About Section */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
             viewport={{ once: true }}
@@ -69,7 +70,7 @@ const Footer = () => {
 
           {/* Quick Links */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
             viewport={{ once: true }}
@@ -92,7 +93,7 @@ const Footer = () => {
 
           {/* Services */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             viewport={{ once: true }}
@@ -110,7 +111,7 @@ const Footer = () => {
 
           {/* Contact Info */}
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.3 }}
             viewport={{ once: true }}
@@ -153,6 +154,41 @@ const Footer = () => {
           </motion.div>
         </div>
       </div>
+
+      {/* Newsletter Section */}
+      <motion.div 
+        className="border-t border-white/10 py-8"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        viewport={{ once: true }}
+      >
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-between">
+            <div className="mb-4 md:mb-0">
+              <h4 className="text-lg font-bold mb-2">Stay Connected</h4>
+              <p className="text-gray-300 text-sm">
+                Subscribe to receive updates about events, festivals, and spiritual programs
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <input
+                type="email"
+                placeholder="Enter your email"
+                className="px-4 py-3 rounded-full bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:border-primary focus:outline-none w-full sm:w-64"
+              />
+              <motion.button
+                className="bg-primary hover:bg-primary/90 text-white px-6 py-3 rounded-full font-semibold transition-all whitespace-nowrap"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                Subscribe
+              </motion.button>
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* Bottom Footer */}
       <div className="border-t border-white/10 py-6">

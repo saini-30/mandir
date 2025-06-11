@@ -1,6 +1,6 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
+import { lazy, Suspense } from 'react';
 import Header from './components/Header';
 import Hero from './components/Hero';
 import About from './components/About';
@@ -9,7 +9,8 @@ import Donation from './components/Donation';
 import Gallery from './components/Gallery';
 import Contact from './components/Contact';
 import Footer from './components/Footer';
-import AdminPanel from './admin/AdminPanel';
+
+const AdminPanel = lazy(() => import('./admin/AdminPanel'));
 
 // Main Website
 const MainWebsite = () => (
@@ -52,7 +53,14 @@ function App() {
         
         <Routes>
           <Route path="/" element={<MainWebsite />} />
-          <Route path="/admin/*" element={<AdminPanel />} />
+          <Route 
+            path="/admin/*" 
+            element={
+              <Suspense fallback={<div>Loading...</div>}>
+                <AdminPanel />
+              </Suspense>
+            } 
+          />
         </Routes>
       </div>
     </Router>

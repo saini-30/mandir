@@ -20,9 +20,6 @@ const Hero = () => {
         }}
       />
       
-      {/* Animated Pattern Overlay */}
-      <div className="absolute inset-0 bg-temple-pattern opacity-30" />
-      
       {/* Content */}
       <div className="relative z-10 container mx-auto px-4 flex items-center min-h-screen">
         <div className="max-w-4xl mx-auto text-center text-white">
