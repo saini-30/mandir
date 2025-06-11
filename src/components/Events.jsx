@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Calendar, MapPin, Users, Target, Clock, Heart } from 'lucide-react';
+import { Calendar, MapPin, Users, Heart } from 'lucide-react';
 import { useEvents } from '../hooks/useEvents';
 import Donation from './Donation';
 
@@ -17,16 +17,12 @@ const Events = () => {
     });
   };
 
-  const getProgressPercentage = (raised, target) => {
-    return Math.min((raised / target) * 100, 100);
+  const calculateProgress = (raised, target) => {
+    return Math.min(Math.round((raised / target) * 100), 100);
   };
 
   const formatAmount = (amount) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
-      maximumFractionDigits: 0
-    }).format(amount);
+    return `₹${amount.toLocaleString('en-IN')}`;
   };
 
   const handleDonateClick = (event) => {
@@ -129,13 +125,13 @@ const Events = () => {
                   <div className="space-y-4 mb-8">
                     <div className="flex items-center justify-between text-sm text-gray-600">
                       <span>Progress: {formatAmount(events.mainEvent.raisedAmount)} of {formatAmount(events.mainEvent.targetAmount)}</span>
-                      <span>{Math.round(getProgressPercentage(events.mainEvent.raisedAmount, events.mainEvent.targetAmount))}%</span>
+                      <span>{Math.round(calculateProgress(events.mainEvent.raisedAmount, events.mainEvent.targetAmount))}%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <motion.div 
                         className="bg-gradient-to-r from-primary to-accent h-3 rounded-full"
                         initial={{ width: 0 }}
-                        whileInView={{ width: `${getProgressPercentage(events.mainEvent.raisedAmount, events.mainEvent.targetAmount)}%` }}
+                        whileInView={{ width: `${calculateProgress(events.mainEvent.raisedAmount, events.mainEvent.targetAmount)}%` }}
                         transition={{ duration: 1, delay: 0.5 }}
                         viewport={{ once: true }}
                       />
@@ -217,13 +213,13 @@ const Events = () => {
                       <div className="w-full bg-gray-200 rounded-full h-2">
                         <div 
                           className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all"
-                          style={{ width: `${getProgressPercentage(event.raisedAmount, event.targetAmount)}%` }}
+                          style={{ width: `${calculateProgress(event.raisedAmount, event.targetAmount)}%` }}
                         />
                       </div>
                       
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>{event.donationCount} supporters</span>
-                        <span>{Math.round(getProgressPercentage(event.raisedAmount, event.targetAmount))}% funded</span>
+                        <span>{Math.round(calculateProgress(event.raisedAmount, event.targetAmount))}% funded</span>
                       </div>
 
                       <motion.button
@@ -297,12 +293,12 @@ const Events = () => {
                     <div className="space-y-4 mb-8">
                       <div className="flex items-center justify-between text-sm text-gray-600">
                         <span>Progress: {formatAmount(selectedEvent.raisedAmount)} of {formatAmount(selectedEvent.targetAmount)}</span>
-                        <span>{Math.round(getProgressPercentage(selectedEvent.raisedAmount, selectedEvent.targetAmount))}%</span>
+                        <span>{Math.round(calculateProgress(selectedEvent.raisedAmount, selectedEvent.targetAmount))}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-3">
                         <div 
                           className="bg-gradient-to-r from-primary to-accent h-3 rounded-full transition-all"
-                          style={{ width: `${getProgressPercentage(selectedEvent.raisedAmount, selectedEvent.targetAmount)}%` }}
+                          style={{ width: `${calculateProgress(selectedEvent.raisedAmount, selectedEvent.targetAmount)}%` }}
                         />
                       </div>
                       <div className="flex items-center justify-between text-sm">

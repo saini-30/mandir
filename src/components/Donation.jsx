@@ -1,18 +1,13 @@
-import React, { useState, FormEvent } from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Heart, CreditCard, Smartphone, Banknote, Shield, CheckCircle, User, Mail, Phone, IndianRupee } from 'lucide-react';
 import { useDonation } from '../hooks/useDonation';
 import toast from 'react-hot-toast';
-import type { DonationFormData, Event } from '../types/components';
 
-interface DonationProps {
-  selectedEvent?: Event | null;
-}
-
-const Donation: React.FC<DonationProps> = ({ selectedEvent = null }) => {
+const Donation = ({ selectedEvent = null }) => {
   const { processPayment, loading } = useDonation();
   
-  const [formData, setFormData] = useState<DonationFormData>({
+  const [formData, setFormData] = useState({
     donorName: '',
     email: '',
     phone: '',
@@ -39,20 +34,20 @@ const Donation: React.FC<DonationProps> = ({ selectedEvent = null }) => {
     { icon: Banknote, name: 'Net Banking', description: 'All major banks supported' }
   ];
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e) => {
     const { name, value, type } = e.target;
-    const checked = (e.target as HTMLInputElement).checked;
+    const checked = type === 'checkbox' ? e.target.checked : null;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
   };
 
-  const handleAmountSelect = (amount: number) => {
+  const handleAmountSelect = (amount) => {
     setFormData(prev => ({ ...prev, amount: amount.toString() }));
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!isFormValid) {

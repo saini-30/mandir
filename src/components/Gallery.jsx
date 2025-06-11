@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Calendar, MapPin } from 'lucide-react';
-import type { ImageType } from '../types/components';
 
 const Gallery = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedImage, setSelectedImage] = useState<ImageType | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const categories = [
     { id: 'all', name: 'All Photos' },
@@ -103,7 +102,7 @@ const Gallery = () => {
     ? galleryImages 
     : galleryImages.filter(img => img.category === selectedCategory);
 
-  const formatDate = (dateString: string): string => {
+  const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
       day: 'numeric',
       month: 'long',

@@ -1,14 +1,14 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { lazy, Suspense } from 'react';
-import Header from './components/Header';
-import Hero from './components/Hero';
-import About from './components/About';
-import Events from './components/Events';
-import Donation from './components/Donation';
-import Gallery from './components/Gallery';
-import Contact from './components/Contact';
-import Footer from './components/Footer';
+import Header from './components/Header.jsx';
+import Hero from './components/Hero.jsx';
+import About from './components/About.jsx';
+import Events from './components/Events.jsx';
+import Donation from './components/Donation.jsx';
+import Gallery from './components/Gallery.jsx';
+import Contact from './components/Contact'; // Remove .jsx extension
+import Footer from './components/Footer.jsx';
 
 const AdminPanel = lazy(() => import('./admin/AdminPanel'));
 
