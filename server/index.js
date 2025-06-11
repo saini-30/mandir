@@ -4,6 +4,7 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import net from 'net';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -16,7 +17,7 @@ import analyticsRoutes from './routes/analytics.js';
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001; // Change default port to 5001
 
 // Security middleware
 app.use(helmet({
@@ -60,10 +61,7 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shreethakurji', {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-})
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/shreethakurji')
 .then(() => console.log('MongoDB connected successfully'))
 .catch(err => console.error('MongoDB connection error:', err));
 
@@ -96,6 +94,59 @@ app.use('*', (req, res) => {
   res.status(404).json({ success: false, message: 'Route not found' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// Function to find available port
+const findAvailablePort = async (startPort) => {
+  const isPortAvailable = (port) => {
+    return new Promise((resolve) => {
+      const server = net.createServer()
+        .listen(port, () => {
+          server.once('close', () => resolve(true));
+          server.close();
+        })
+        .on('error', () => resolve(false));
+    });
+  };
+
+  let port = startPort;
+  while (!(await isPortAvailable(port))) {
+    port++;
+    if (port > startPort + 100) {
+      throw new Error('No available ports found');
+    }
+  }
+  return port;
+};
+
+// Modified server startup with dynamic port
+const startServer = async () => {
+  try {
+    const desiredPort = process.env.PORT || 5000;
+    const availablePort = await findAvailablePort(desiredPort);
+    
+    if (availablePort !== desiredPort) {
+      console.log(`Port ${desiredPort} is in use, using port ${availablePort} instead`);
+    }
+
+    const server = app.listen(availablePort, () => {
+      console.log(`Server running on port ${availablePort}`);
+    });
+
+    // Graceful shutdown
+    const signals = ['SIGTERM', 'SIGINT'];
+    signals.forEach(signal => {
+      process.on(signal, async () => {
+        console.log(`Received ${signal}, shutting down...`);
+        await mongoose.connection.close();
+        server.close(() => {
+          console.log('Server closed');
+          process.exit(0);
+        });
+      });
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

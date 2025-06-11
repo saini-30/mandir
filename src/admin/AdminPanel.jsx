@@ -25,7 +25,6 @@ import DonationsManager from './components/DonationsManager';
 import EventsManager from './components/EventsManager';
 import GalleryManager from './components/GalleryManager';
 import Analytics from './components/Analytics';
-import Settings from './components/Settings';
 
 const AdminPanel = () => {
   const [user, setUser] = useState(null);
