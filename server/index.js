@@ -40,20 +40,32 @@ app.use(cors({
   credentials: true
 }));
 
-// Rate limiting
+// Global rate limiting (increased limit)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 200, // increased from 100 to 200 requests per windowMs
   message: 'Too many requests from this IP, please try again later.'
 });
 
+// Auth-specific rate limiting
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // limit each IP to 20 auth requests per 15 minutes
+  message: 'Too many authentication attempts, please try again later.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// Donation-specific rate limiting
 const donationLimiter = rateLimit({
   windowMs: 60 * 1000, // 1 minute
   max: 5, // limit each IP to 5 donation attempts per minute
   message: 'Too many donation attempts, please try again later.'
 });
 
-app.use('/api', limiter);
+// Apply rate limiters
+app.use('/api', limiter); // Global limiter
+app.use('/api/auth', authLimiter); // Auth-specific limiter
 app.use('/api/donations', donationLimiter);
 
 // Body parsing middleware

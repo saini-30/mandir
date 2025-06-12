@@ -1,24 +1,50 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Calendar, MapPin, ArrowRight } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { X, Calendar, MapPin, Search, Filter } from 'lucide-react';
 import { galleryAPI } from '../services/api';
 
-const Gallery = () => {
+const AllGallery = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [galleryImages, setGalleryImages] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    category: 'all',
+    search: '',
+    page: 1,
+    limit: 12
+  });
+  const [pagination, setPagination] = useState({
+    currentPage: 1,
+    totalPages: 1,
+    totalCount: 0
+  });
+
+  const categories = [
+    { value: 'all', label: 'All Categories' },
+    { value: 'festivals', label: 'Festivals' },
+    { value: 'mandir', label: 'Temple' },
+    { value: 'events', label: 'Events' },
+    { value: 'daily', label: 'Daily Activities' }
+  ];
+
   useEffect(() => {
     fetchGalleryImages();
-  }, []);
+  }, [filters]);
 
   const fetchGalleryImages = async () => {
     try {
       setLoading(true);
-      // Only get pinned images for homepage
-      const response = await galleryAPI.getPinned();
-      setGalleryImages(response.data.data);
+      const response = await galleryAPI.getPublic(filters);
+      const newImages = response.data.data;
+      
+      if (filters.page === 1) {
+        setGalleryImages(newImages);
+      } else {
+        setGalleryImages(prev => [...prev, ...newImages]);
+      }
+      
+      setPagination(response.data.pagination);
     } catch (error) {
       console.error('Failed to fetch gallery images:', error);
     } finally {
@@ -26,15 +52,11 @@ const Gallery = () => {
     }
   };
 
-  const filteredImages = galleryImages.map(img => ({
-    id: img._id,
-    url: img.images && img.images.length > 0 ? img.images[0].url : '',
-    images: img.images || [],
-    title: img.title,
-    description: img.description,
-    date: img.date,
-    location: img.location
-  }));
+  const loadMore = () => {
+    if (pagination.currentPage < pagination.totalPages) {
+      setFilters(prev => ({ ...prev, page: prev.page + 1 }));
+    }
+  };
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-IN', {
@@ -45,7 +67,7 @@ const Gallery = () => {
   };
 
   return (
-    <section id="gallery" className="py-20 bg-gradient-to-br from-warm-50 to-orange-50">
+    <div className="py-20 bg-gradient-to-br from-warm-50 to-orange-50 min-h-screen">
       <div className="container mx-auto px-4">
         {/* Header */}
         <motion.div 
@@ -55,15 +77,44 @@ const Gallery = () => {
           transition={{ duration: 0.6 }}
           viewport={{ once: true }}
         >
-          <h2 className="text-4xl md:text-5xl font-bold font-display text-gray-800 mb-6">
+          <h1 className="text-4xl md:text-5xl font-bold font-display text-gray-800 mb-6">
             Temple Gallery
-          </h2>
+          </h1>
           <div className="w-24 h-1 bg-gradient-to-r from-primary to-accent mx-auto mb-8"></div>
           <p className="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
-            Glimpses of our spiritual journey, festivals, daily activities, and the divine 
-            atmosphere that makes our temple a sacred home for all devotees.
+            Explore our extensive collection of photographs capturing the divine moments, 
+            festivals, ceremonies, and daily activities at our temple.
           </p>
         </motion.div>
+
+        {/* Filters */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search gallery..."
+                value={filters.search}
+                onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value, page: 1 }))}
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Filter className="w-5 h-5 text-gray-500" />
+              <select
+                value={filters.category}
+                onChange={(e) => setFilters(prev => ({ ...prev, category: e.target.value, page: 1 }))}
+                className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+              >
+                {categories.map(cat => (
+                  <option key={cat.value} value={cat.value}>{cat.label}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        </div>
 
         {/* Image Grid */}
         <motion.div 
@@ -71,20 +122,25 @@ const Gallery = () => {
           layout
         >
           <AnimatePresence>
-            {filteredImages.map((image, index) => (
+            {galleryImages.map((image, index) => (
               <motion.div
-                key={image.id}
+                key={image._id}
                 className="relative group cursor-pointer overflow-hidden rounded-2xl shadow-lg hover:shadow-xl"
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.9 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 whileHover={{ y: -5 }}
-                onClick={() => setSelectedImage(image)}
+                onClick={() => {
+                  setSelectedImage(image);
+                  setCurrentImageIndex(0);
+                }}
                 layout
-              >                <div className="aspect-square overflow-hidden">                  <div className="relative w-full h-full">
+              >
+                <div className="aspect-square overflow-hidden">
+                  <div className="relative w-full h-full">
                     <img 
-                      src={image.images && image.images.length > 0 ? image.images[0].url : image.url}
+                      src={image.images && image.images.length > 0 ? image.images[0].url : ''}
                       alt={image.title}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                     />
@@ -135,25 +191,23 @@ const Gallery = () => {
           </AnimatePresence>
         </motion.div>
 
-        {/* View All Photos Button */}
-        <motion.div 
-          className="text-center mt-12"
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
-          viewport={{ once: true }}
-        >
-          <Link to="/gallery" className="inline-block">
-            <motion.button
-              className="bg-white hover:bg-primary hover:text-white text-gray-700 border-2 border-gray-200 hover:border-primary px-8 py-3 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl flex items-center gap-2"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+        {/* Load More Button */}
+        {pagination.currentPage < pagination.totalPages && !loading && (
+          <motion.div 
+            className="text-center mt-12"
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+          >
+            <button
+              onClick={loadMore}
+              className="bg-white hover:bg-primary hover:text-white text-gray-700 border-2 border-gray-200 hover:border-primary px-8 py-3 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl"
             >
-              <span>View All Photos</span>
-              <ArrowRight className="w-5 h-5" />
-            </motion.button>
-          </Link>
-        </motion.div>
+              Load More Photos
+            </button>
+          </motion.div>
+        )}
 
         {/* Image Modal */}
         <AnimatePresence>
@@ -185,18 +239,13 @@ const Gallery = () => {
                   <div className="relative">
                     {selectedImage.images && selectedImage.images.length > 0 ? (
                       <>
-                        <div className="overflow-x-auto whitespace-nowrap scrollbar-hide">
-                          <div className="flex">                            {selectedImage.images.map((img, idx) => (
-                              <div key={idx} className="min-w-full flex-shrink-0">
-                                <img 
-                                  src={img.url}
-                                  alt={`${selectedImage.title} - Image ${idx + 1}`}
-                                  className="w-full max-h-[70vh] object-contain mx-auto"
-                                />
-                              </div>
-                            ))}
-                          </div>
-                        </div>                        {selectedImage.images.length > 1 && (
+                        <img 
+                          src={selectedImage.images[currentImageIndex].url}
+                          alt={`${selectedImage.title} - Image ${currentImageIndex + 1}`}
+                          className="w-full max-h-[70vh] object-contain mx-auto"
+                        />
+                        
+                        {selectedImage.images.length > 1 && (
                           <>
                             <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-2">
                               {selectedImage.images.map((_, idx) => (
@@ -205,7 +254,10 @@ const Gallery = () => {
                                   className={`w-2 h-2 rounded-full transition-colors ${
                                     currentImageIndex === idx ? 'bg-white' : 'bg-white/50 hover:bg-white/80'
                                   }`}
-                                  onClick={() => setCurrentImageIndex(idx)}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setCurrentImageIndex(idx);
+                                  }}
                                 />
                               ))}
                             </div>
@@ -271,9 +323,40 @@ const Gallery = () => {
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Loading State */}
+        {loading && galleryImages.length === 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="aspect-square bg-gray-200 rounded-2xl animate-pulse">
+                <div className="w-full h-full bg-gradient-to-b from-gray-100 to-gray-200" />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!loading && galleryImages.length === 0 && (
+          <div className="text-center py-12">
+            <div className="w-24 h-24 bg-gray-100 rounded-full mx-auto mb-6 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">No Photos Found</h3>
+            <p className="text-gray-600">
+              {filters.search 
+                ? 'No photos match your search criteria. Try different keywords.'
+                : filters.category !== 'all'
+                  ? 'There are no photos in this category yet.'
+                  : 'The gallery is empty. Check back soon for new photos.'
+              }
+            </p>
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
 };
 
-export default Gallery;
+export default AllGallery;

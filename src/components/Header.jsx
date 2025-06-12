@@ -5,10 +5,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      setIsScrolled(window.scrollY > 20);
     };
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
@@ -41,13 +40,10 @@ const Header = () => {
             "सर्वे भवन्तु सुखिनः सर्वे सन्तु निरामयाः"
           </div>
         </div>
-      </div>
-
-      {/* Main Header */}
-      <motion.header
-        className={`fixed w-full z-50 transition-all duration-300 ${
+      </div>      {/* Main Header */}      <motion.header
+        className={`fixed w-full z-50 transition-all duration-500 ${
           isScrolled 
-            ? 'bg-white/95 backdrop-blur-md shadow-lg' 
+            ? 'bg-white/60 backdrop-blur-sm shadow-lg' 
             : 'bg-transparent'
         }`}
         initial={{ y: -100 }}
@@ -61,35 +57,26 @@ const Header = () => {
               className="flex items-center space-x-3"
               whileHover={{ scale: 1.05 }}
               transition={{ type: "spring", stiffness: 400 }}
-            >
-              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-                isScrolled ? 'bg-primary' : 'bg-white/20 backdrop-blur-sm'
+            >              <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                isScrolled ? 'bg-primary shadow-lg' : 'bg-primary'
               }`}>
-                <Heart className={`w-6 h-6 ${isScrolled ? 'text-white' : 'text-white'}`} fill="currentColor" />
+                <Heart className="w-6 h-6 text-white" fill="currentColor" />
               </div>
-              <div>
-                <h1 className={`text-xl font-bold font-display ${
-                  isScrolled ? 'text-gray-800' : 'text-white'
-                }`}>
+              <div>                <h1 className="text-xl font-bold font-display text-gray-800 transition-colors duration-500">
                   Shree Thakur Ji
                 </h1>
-                <p className={`text-sm ${
-                  isScrolled ? 'text-gray-600' : 'text-white/80'
-                }`}>
+                <p className="text-sm text-gray-600 transition-colors duration-500">
                   Seva Sang
                 </p>
               </div>
             </motion.div>
 
-            {/* Desktop Navigation */}
-            <nav className="hidden lg:flex space-x-8">
+            {/* Desktop Navigation */}            <nav className="hidden lg:flex space-x-8">
               {navItems.map((item) => (
                 <motion.a
                   key={item.name}
                   href={item.href}
-                  className={`font-medium transition-colors hover:text-primary ${
-                    isScrolled ? 'text-gray-700' : 'text-white'
-                  }`}
+                  className="font-medium text-lg text-gray-800 transition-colors duration-500 hover:text-primary"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -108,15 +95,14 @@ const Header = () => {
               Donate Now
             </motion.button>
 
-            {/* Mobile Menu Button */}
-            <button
+            {/* Mobile Menu Button */}            <button
               className="lg:hidden p-2"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? (
-                <X className={`w-6 h-6 ${isScrolled ? 'text-gray-800' : 'text-white'}`} />
+                <X className="w-6 h-6 text-gray-800 transition-colors duration-500" />
               ) : (
-                <Menu className={`w-6 h-6 ${isScrolled ? 'text-gray-800' : 'text-white'}`} />
+                <Menu className="w-6 h-6 text-gray-800 transition-colors duration-500" />
               )}
             </button>
           </div>

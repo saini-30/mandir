@@ -26,9 +26,7 @@ const EventsManager = () => {
     status: 'all',
     search: ''
   });
-  const [pagination, setPagination] = useState({});
-
-  const [formData, setFormData] = useState({
+  const [pagination, setPagination] = useState({});  const [formData, setFormData] = useState({
     title: '',
     description: '',
     targetAmount: '',
@@ -38,7 +36,8 @@ const EventsManager = () => {
     category: 'Festival',
     priority: 5,
     isMainEvent: false,
-    status: 'active'
+    images: [],
+    imagePreviewUrls: []
   });
 
   useEffect(() => {
@@ -56,23 +55,35 @@ const EventsManager = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleSubmit = async (e) => {
+  };  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    try {
-      const eventData = {
-        ...formData,
-        targetAmount: parseInt(formData.targetAmount),
-        priority: parseInt(formData.priority)
-      };
+    try {      const formDataToSend = new FormData();
+      
+      // Add each field individually to FormData
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('targetAmount', formData.targetAmount);
+      formDataToSend.append('eventDate', formData.eventDate || '');
+      formDataToSend.append('endDate', formData.endDate || '');
+      formDataToSend.append('location', formData.location);
+      formDataToSend.append('category', formData.category);
+      formDataToSend.append('priority', formData.priority.toString());
+      formDataToSend.append('isMainEvent', formData.isMainEvent.toString());
+      formDataToSend.append('status', 'active');
+      
+      // Append each image file
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach(image => {
+          formDataToSend.append('images', image);
+        });
+      }
 
       if (editingEvent) {
-        await eventsAPI.update(editingEvent._id, eventData);
+        await eventsAPI.update(editingEvent._id, formDataToSend);
         toast.success('Event updated successfully');
       } else {
-        await eventsAPI.create(eventData);
+        await eventsAPI.create(formDataToSend);
         toast.success('Event created successfully');
       }
 
@@ -81,11 +92,16 @@ const EventsManager = () => {
       resetForm();
       fetchEvents();
     } catch (error) {
-      toast.error(editingEvent ? 'Failed to update event' : 'Failed to create event');
+      const errorMessage = error.response?.data?.message || 
+        (editingEvent ? 'Failed to update event' : 'Failed to create event');
+      toast.error(errorMessage);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
     }
-  };
-
-  const handleEdit = (event) => {
+  };const handleEdit = (event) => {
     setEditingEvent(event);
     setFormData({
       title: event.title,
@@ -97,7 +113,8 @@ const EventsManager = () => {
       category: event.category,
       priority: event.priority,
       isMainEvent: event.isMainEvent,
-      status: event.status
+      images: [],
+      imagePreviewUrls: event.images?.map(img => img.url) || []
     });
     setShowModal(true);
   };
@@ -122,9 +139,7 @@ const EventsManager = () => {
     } catch (error) {
       toast.error('Failed to set main event');
     }
-  };
-
-  const resetForm = () => {
+  };  const resetForm = () => {
     setFormData({
       title: '',
       description: '',
@@ -135,9 +150,32 @@ const EventsManager = () => {
       category: 'Festival',
       priority: 5,
       isMainEvent: false,
-      status: 'active'
+      images: [],
+      imagePreviewUrls: []
     });
   };
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length > 5) {
+      toast.error('You can only upload up to 5 images');
+      return;
+    }
+
+    // Generate preview URLs for the images
+    const previewUrls = files.map(file => URL.createObjectURL(file));
+    
+    setFormData(prev => ({
+      ...prev,
+      images: files,
+      imagePreviewUrls: previewUrls
+    }));
+  };
+  // Cleanup preview URLs when component unmounts or modal closes
+  useEffect(() => {
+    return () => {
+      formData.imagePreviewUrls?.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [formData.imagePreviewUrls]);
 
   const formatAmount = (amount) => {
     return new Intl.NumberFormat('en-IN', {
@@ -255,94 +293,105 @@ const EventsManager = () => {
           events.map((event) => (
             <motion.div
               key={event._id}
-              className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-shadow"
+              className="bg-white rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  {getStatusBadge(event.status)}
-                  {event.isMainEvent && (
-                    <span className="px-2 py-1 bg-primary text-white text-xs rounded-full flex items-center space-x-1">
-                      <Star className="w-3 h-3" />
-                      <span>Main</span>
-                    </span>
-                  )}
-                </div>
-                <div className="flex space-x-1">
-                  <button
-                    onClick={() => handleEdit(event)}
-                    className="p-1 text-gray-400 hover:text-blue-600"
-                  >
-                    <Edit className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(event._id)}
-                    className="p-1 text-gray-400 hover:text-red-600"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
-                {event.title}
-              </h3>
-
-              <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                {event.description}
-              </p>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Target</span>
-                  <span className="font-semibold">{formatAmount(event.targetAmount)}</span>
-                </div>
-
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-500">Raised</span>
-                  <span className="font-semibold text-green-600">{formatAmount(event.raisedAmount)}</span>
-                </div>
-
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all"
-                    style={{ width: `${Math.min((event.raisedAmount / event.targetAmount) * 100, 100)}%` }}
+              {event.images && event.images[0] && (
+                <div className="w-full h-48 relative">
+                  <img
+                    src={event.images[0].url}
+                    alt={event.title}
+                    className="w-full h-full object-cover"
                   />
                 </div>
-
-                <div className="flex items-center justify-between text-xs text-gray-500">
-                  <div className="flex items-center space-x-1">
-                    <Users className="w-3 h-3" />
-                    <span>{event.donationCount} donors</span>
+              )}
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    {getStatusBadge(event.status)}
+                    {event.isMainEvent && (
+                      <span className="px-2 py-1 bg-primary text-white text-xs rounded-full flex items-center space-x-1">
+                        <Star className="w-3 h-3" />
+                        <span>Main</span>
+                      </span>
+                    )}
                   </div>
-                  <span>{Math.round((event.raisedAmount / event.targetAmount) * 100)}% funded</span>
+                  <div className="flex space-x-1">
+                    <button
+                      onClick={() => handleEdit(event)}
+                      className="p-1 text-gray-400 hover:text-blue-600"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleDelete(event._id)}
+                      className="p-1 text-gray-400 hover:text-red-600"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+                
+                <h3 className="text-lg font-bold text-gray-900 mb-2 line-clamp-2">
+                  {event.title}
+                </h3>
+
+                <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                  {event.description}
+                </p>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Target</span>
+                    <span className="font-semibold">{formatAmount(event.targetAmount)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-500">Raised</span>
+                    <span className="font-semibold text-green-600">{formatAmount(event.raisedAmount)}</span>
+                  </div>
+
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-gradient-to-r from-primary to-accent h-2 rounded-full transition-all"
+                      style={{ width: `${Math.min((event.raisedAmount / event.targetAmount) * 100, 100)}%` }}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <div className="flex items-center space-x-1">
+                      <Users className="w-3 h-3" />
+                      <span>{event.donationCount} donors</span>
+                    </div>
+                    <span>{Math.round((event.raisedAmount / event.targetAmount) * 100)}% funded</span>
+                  </div>
+
+                  {event.eventDate && (
+                    <div className="flex items-center space-x-1 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3" />
+                      <span>{formatDate(event.eventDate)}</span>
+                    </div>
+                  )}
                 </div>
 
-                {event.eventDate && (
-                  <div className="flex items-center space-x-1 text-xs text-gray-500">
-                    <Calendar className="w-3 h-3" />
-                    <span>{formatDate(event.eventDate)}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-4 flex space-x-2">
-                {!event.isMainEvent && event.status === 'active' && (
+                <div className="mt-4 flex space-x-2">
+                  {!event.isMainEvent && event.status === 'active' && (
+                    <button
+                      onClick={() => handleSetMain(event._id)}
+                      className="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                    >
+                      Set as Main
+                    </button>
+                  )}
                   <button
-                    onClick={() => handleSetMain(event._id)}
-                    className="flex-1 px-3 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition-colors text-sm font-medium"
+                    onClick={() => handleEdit(event)}
+                    className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
                   >
-                    Set as Main
+                    Edit
                   </button>
-                )}
-                <button
-                  onClick={() => handleEdit(event)}
-                  className="flex-1 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm font-medium"
-                >
-                  Edit
-                </button>
+                </div>
               </div>
             </motion.div>
           ))
@@ -516,23 +565,71 @@ const EventsManager = () => {
                       min="1"
                       max="10"
                     />
-                  </div>
-
-                  <div>
+                  </div>                  <div className="md:col-span-2">
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status
+                      Event Images
                     </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                    >
-                      <option value="draft">Draft</option>
-                      <option value="active">Active</option>
-                      <option value="paused">Paused</option>
-                      <option value="completed">Completed</option>
-                      <option value="cancelled">Cancelled</option>
-                    </select>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageChange}
+                        className="hidden"
+                        id="event-images"
+                      />
+                      <label htmlFor="event-images" className="cursor-pointer block">
+                        <div className="text-center">                          {formData.imagePreviewUrls?.length > 0 ? (
+                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                              {formData.imagePreviewUrls?.map((url, index) => (
+                                <div key={index} className="relative aspect-video">
+                                  <img
+                                    src={url}
+                                    alt={`Event preview ${index + 1}`}
+                                    className="w-full h-full object-cover rounded-lg"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const newImages = [...formData.images];
+                                      const newPreviews = [...formData.imagePreviewUrls];
+                                      newImages.splice(index, 1);
+                                      newPreviews.splice(index, 1);
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        images: newImages,
+                                        imagePreviewUrls: newPreviews
+                                      }));
+                                    }}
+                                    className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <>
+                              <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                              <p className="text-sm text-gray-600 mb-2">
+                                Click to upload images or drag and drop (up to 5 images)
+                              </p>
+                              <p className="text-xs text-gray-500">PNG, JPG, WEBP up to 5MB each</p>
+                            </>
+                          )}
+                          {(formData.imagePreviewUrls?.length || 0) < 5 && (
+                            <button
+                              type="button"
+                              onClick={() => document.getElementById('event-images').click()}
+                              className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors text-sm"
+                            >
+                              {!formData.imagePreviewUrls?.length ? 'Upload Images' : 'Add More Images'}
+                            </button>
+                          )}
+                        </div>
+                      </label>
+                    </div>
                   </div>
 
                   <div className="md:col-span-2">

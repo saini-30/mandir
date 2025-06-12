@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Plus, 
@@ -17,10 +17,10 @@ const GalleryManager = () => {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingGallery, setEditingGallery] = useState(null);
-  const [filters, setFilters] = useState({
+  const [selectedFiles, setSelectedFiles] = useState([]);
+  const [uploadPreview, setUploadPreview] = useState([]);  const [filters, setFilters] = useState({
     page: 1,
     limit: 20,
-    category: 'all',
     search: ''
   });
   const [pagination, setPagination] = useState({});
@@ -33,6 +33,8 @@ const GalleryManager = () => {
     location: 'Temple Complex',
     date: new Date().toISOString().split('T')[0]
   });
+
+  const fileInputRef = useRef(null);
 
   const categories = [
     { value: 'festivals', label: 'Festivals' },
@@ -57,25 +59,92 @@ const GalleryManager = () => {
       setLoading(false);
     }
   };
+  const handleFileSelect = (e) => {
+    let files = Array.from(e.target.files);
+    
+    if (files.length > 20) {
+      toast.error('You can only upload up to 20 images at once');
+      files = files.slice(0, 20);
+    }
+    
+    setSelectedFiles(files);
 
+    // Create preview URLs
+    const previews = files.map(file => URL.createObjectURL(file));
+    setUploadPreview(previews);
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
-      if (editingGallery) {
-        await galleryAPI.update(editingGallery._id, formData);
-        toast.success('Gallery item updated successfully');
-      } else {
-        await galleryAPI.create(formData);
-        toast.success('Gallery item created successfully');
+      if (!selectedFiles.length) {
+        toast.error('Please select at least one image');
+        return;
       }
 
-      setShowModal(false);
-      setEditingGallery(null);
-      resetForm();
-      fetchGalleries();
+      // Show loading toast
+      const loadingToast = toast.loading(
+        `Uploading ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}...`
+      );
+
+      try {
+        // Create separate upload for each image
+        const uploadPromises = selectedFiles.map(async (file, index) => {
+          const singleFormData = new FormData();
+          
+          // Add all form data
+          Object.keys(formData).forEach(key => {
+            singleFormData.append(key, formData[key]);
+          });
+          
+          // Add numbered suffix to title if multiple images
+          if (selectedFiles.length > 1) {
+            singleFormData.set('title', `${formData.title} ${index + 1}`);
+          }
+          
+          // Add single image
+          singleFormData.append('images', file);
+
+          if (editingGallery) {
+            return galleryAPI.update(editingGallery._id, singleFormData);
+          } else {
+            return galleryAPI.create(singleFormData);
+          }
+        });
+
+        // Wait for all uploads to complete
+        await Promise.all(uploadPromises);
+        
+        // Dismiss loading toast and show success
+        toast.dismiss(loadingToast);
+        toast.success(
+          `Successfully uploaded ${selectedFiles.length} image${selectedFiles.length > 1 ? 's' : ''}`
+        );
+
+        // Reset form and close modal
+        setFormData({
+          title: '',
+          description: '',
+          category: 'festivals',
+          isPublic: true,
+          location: 'Temple Complex',
+          date: new Date().toISOString().split('T')[0]
+        });
+        setSelectedFiles([]);
+        setUploadPreview([]);
+        setShowModal(false);
+        setEditingGallery(null);
+        
+        // Refresh gallery list
+        fetchGalleries();
+      } catch (error) {
+        console.error('Upload error:', error);
+        toast.dismiss(loadingToast);
+        toast.error('Failed to upload one or more images. Please try again.');
+      }
     } catch (error) {
-      toast.error(editingGallery ? 'Failed to update gallery item' : 'Failed to create gallery item');
+      console.error('Form submission error:', error);
+      toast.error('Failed to process the form. Please try again.');
     }
   };
 
@@ -104,6 +173,20 @@ const GalleryManager = () => {
     }
   };
 
+  const handlePinToggle = async (gallery) => {
+    try {
+      await galleryAPI.togglePin(gallery._id);
+      toast.success(gallery.isPinned ? 'Image unpinned successfully' : 'Image pinned successfully');
+      fetchGalleries();
+    } catch (error) {
+      if (error.response?.status === 400) {
+        toast.error('Maximum 6 images can be pinned');
+      } else {
+        toast.error('Failed to update pin status');
+      }
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
@@ -113,6 +196,8 @@ const GalleryManager = () => {
       location: 'Temple Complex',
       date: new Date().toISOString().split('T')[0]
     });
+    setSelectedFiles([]);
+    setUploadPreview([]);
   };
 
   const formatDate = (dateString) => {
@@ -205,18 +290,27 @@ const GalleryManager = () => {
           galleries.map((gallery) => (
             <motion.div
               key={gallery._id}
-              className="bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow"
+              className={`bg-white rounded-xl shadow-sm overflow-hidden hover:shadow-md transition-shadow ${
+                gallery.isPinned ? 'ring-2 ring-primary' : ''
+              }`}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
               <div className="relative h-48 bg-gray-200">
                 {gallery.images && gallery.images.length > 0 ? (
-                  <img
-                    src={gallery.images[0].url}
-                    alt={gallery.title}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="relative w-full h-full">
+                    <img
+                      src={gallery.images[0].url}
+                      alt={gallery.title}
+                      className="w-full h-full object-cover"
+                    />
+                    {gallery.images.length > 1 && (
+                      <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-lg text-sm">
+                        +{gallery.images.length - 1} more
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <div className="w-full h-full flex items-center justify-center">
                     <ImageIcon className="w-12 h-12 text-gray-400" />
@@ -225,19 +319,47 @@ const GalleryManager = () => {
                 
                 <div className="absolute top-2 right-2 flex space-x-1">
                   <button
-                    onClick={() => handleEdit(gallery)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePinToggle(gallery);
+                    }}
+                    className="p-1 bg-white/80 rounded-full hover:bg-white transition-colors group"
+                    title={gallery.isPinned ? 'Unpin from homepage' : 'Pin to homepage'}
+                  >
+                    <svg 
+                      viewBox="0 0 24 24" 
+                      className={`w-4 h-4 ${gallery.isPinned ? 'text-primary' : 'text-gray-600 group-hover:text-primary'}`}
+                    >
+                      <path 
+                        fill={gallery.isPinned ? 'currentColor' : 'none'}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        d="M12 2L4 12h3v8h10v-8h3L12 2z"
+                      />
+                    </svg>
+                  </button>
+                  
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(gallery);
+                    }}
                     className="p-1 bg-white/80 rounded-full hover:bg-white transition-colors"
                   >
                     <Edit className="w-4 h-4 text-gray-600" />
                   </button>
+                  
                   <button
-                    onClick={() => handleDelete(gallery._id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(gallery._id);
+                    }}
                     className="p-1 bg-white/80 rounded-full hover:bg-white transition-colors"
                   >
                     <Trash2 className="w-4 h-4 text-red-600" />
                   </button>
                 </div>
-
+                
                 <div className="absolute top-2 left-2">
                   <span className="px-2 py-1 bg-black/50 text-white text-xs rounded-full">
                     {categories.find(c => c.value === gallery.category)?.label}
@@ -422,30 +544,53 @@ const GalleryManager = () => {
                 {/* Image Upload Section */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Images
+                    Images *
                   </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-                    <p className="text-sm text-gray-600 mb-2">
-                      Click to upload images or drag and drop
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      PNG, JPG, WEBP up to 5MB each
-                    </p>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                    {uploadPreview.length > 0 ? (
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        {uploadPreview.map((preview, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={preview}
+                              alt={`Preview ${index + 1}`}
+                              className="w-full h-40 object-cover rounded-lg"
+                            />
+                            <button
+                              type="button"
+                              className="absolute top-2 right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                              onClick={() => {
+                                setSelectedFiles(files => files.filter((_, i) => i !== index));
+                                setUploadPreview(previews => previews.filter((_, i) => i !== index));
+                              }}
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />                        <p className="text-sm text-gray-600 mb-2">
+                          Click to upload images or drag and drop (up to 20 images)
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          PNG, JPG, WEBP up to 5MB each
+                        </p>
+                      </div>
+                    )}
                     <input
                       type="file"
                       multiple
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
-                        // Handle file upload here
-                        console.log('Files selected:', e.target.files);
-                      }}
+                      onChange={handleFileSelect}
+                      ref={fileInputRef}
                     />
                     <button
                       type="button"
                       className="mt-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                      onClick={() => document.querySelector('input[type="file"]').click()}
+                      onClick={() => fileInputRef.current?.click()}
                     >
                       Choose Files
                     </button>

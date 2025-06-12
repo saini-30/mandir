@@ -5,21 +5,20 @@ const gallerySchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true
-  },
-  description: {
+  },  description: {
     type: String,
     maxlength: 500
   },
-  category: {
-    type: String,
-    enum: ['festivals', 'mandir', 'events', 'daily'],
-    required: true
+  isPinned: {
+    type: Boolean,
+    default: false
   },
   images: [{
-    url: String,
-    publicId: String,
-    alt: String,
-    caption: String
+    url: {
+      type: String,
+      required: true
+    },
+    alt: String
   }],
   isPublic: {
     type: Boolean,

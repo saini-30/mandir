@@ -18,32 +18,38 @@ const upload = multer({
   storage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
-    files: 10 // Maximum 10 files
+    files: 20 // Maximum 20 files
   },
   fileFilter
 });
 
 // Middleware to handle image uploads
-export const uploadImages = (req, res, next) => {
-  const uploadMiddleware = upload.array('images', 10);
+export const uploadImages = async (req, res, next) => {
+  const uploadMiddleware = upload.array('images', 20);
   
-  uploadMiddleware(req, res, (err) => {
-    if (err) {
-      return res.status(400).json({
-        success: false,
-        message: err.message
+  try {
+    await new Promise((resolve, reject) => {
+      uploadMiddleware(req, res, (err) => {
+        if (err) reject(err);
+        else resolve();
       });
+    });
+
+    if (!req.files || req.files.length === 0) {
+      return next();
     }
 
-    // Process uploaded files (in a real app, you'd upload to Cloudinary here)
-    if (req.files && req.files.length > 0) {
-      req.uploadedImages = req.files.map((file, index) => ({
-        url: `https://images.pexels.com/photos/7945776/pexels-photo-7945776.jpeg?auto=compress&cs=tinysrgb&w=800`, // Placeholder
-        publicId: `upload_${Date.now()}_${index}`,
-        alt: file.originalname
-      }));
-    }
+    // Convert files to base64 strings and store in MongoDB
+    req.uploadedImages = req.files.map(file => ({
+      url: `data:${file.mimetype};base64,${file.buffer.toString('base64')}`,
+      alt: file.originalname
+    }));
 
     next();
-  });
+  } catch (error) {
+    return res.status(400).json({
+      success: false,
+      message: error.message || 'Error processing file upload'
+    });
+  }
 };

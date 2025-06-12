@@ -1,119 +1,104 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Heart, Users, Gift, Star } from 'lucide-react';
+import { Heart, Users, Gift, Star, MapPin } from 'lucide-react';
 
 const Hero = () => {
-  const stats = [
-    { icon: Heart, label: 'Devotees Served', value: '50,000+' },
-    { icon: Users, label: 'Active Members', value: '5,000+' },
-    { icon: Gift, label: 'Events Organized', value: '500+' },
-    { icon: Star, label: 'Years of Service', value: '25+' },
-  ];
 
   return (
-    <section id="home" className="min-h-screen relative overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{
-          backgroundImage: `linear-gradient(rgba(196, 30, 58, 0.7), rgba(255, 107, 53, 0.8)), url('https://images.pexels.com/photos/7945776/pexels-photo-7945776.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2')`
-        }}
-      />
+    <section id="home" className="min-h-screen relative overflow-hidden bg-gradient-to-br from-orange-50 to-red-50">
+      {/* Background Pattern */}
+      <div className="absolute inset-0 bg-temple-pattern opacity-5" />
+      
+      {/* Om Symbol */}
+      <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-10">
+        <div className="w-[800px] h-[800px] bg-primary/20 rounded-full flex items-center justify-center">
+          <span className="text-[600px] text-primary/30 font-serif">ॐ</span>
+        </div>
+      </div>
       
       {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 flex items-center min-h-screen">
-        <div className="max-w-4xl mx-auto text-center text-white">
-          {/* Main Content */}
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-          >
-            <motion.h1 
-              className="text-5xl md:text-7xl font-bold font-display mb-6 leading-tight"
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 1, delay: 0.2 }}
+      <div className="relative z-10 container mx-auto px-4 pt-32 pb-20 min-h-screen flex items-center">
+        <div className="grid lg:grid-cols-2 gap-12 items-center">
+          {/* Left Content */}
+          <div className="text-center lg:text-left">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="inline-block"
             >
-              Welcome to
-              <span className="block text-accent animate-float">
-                Shree Thakur Ji Seva Sang
+              <span className="bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                🙏 Welcome to Divine Service
               </span>
+            </motion.div>
+            
+            <motion.h1 
+              className="text-4xl lg:text-6xl font-bold text-gray-900 mt-6 mb-6"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              Shree Thakur Ji
+              <span className="block text-primary mt-2">Seva Sang</span>
             </motion.h1>
             
             <motion.p 
-              className="text-xl md:text-2xl mb-8 leading-relaxed font-light"
+              className="text-lg text-gray-600 mb-8 max-w-xl"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4 }}
             >
-              Join us in serving Thakur Ji through devotion, community service, and spiritual growth. 
-              Your contribution helps us organize festivals, support the community, and spread divine love.
+              Join us in serving the divine through donations, prayers, and
+              community service. Your contribution helps maintain our sacred
+              mandir and supports countless devotees in their spiritual journey.
             </motion.p>
-            
-            <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center mb-16"
+
+            <motion.div
+              className="flex flex-wrap gap-4 justify-center lg:justify-start"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.6 }}
             >
-              <motion.button
-                className="bg-primary hover:bg-primary/90 text-white px-8 py-4 rounded-full text-lg font-semibold shadow-xl hover:shadow-2xl transition-all"
-                whileHover={{ scale: 1.05, y: -3 }}
-                whileTap={{ scale: 0.95 }}
+              <button 
                 onClick={() => document.getElementById('donation')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-primary hover:bg-primary/90 text-white px-8 py-3 rounded-full font-semibold transition-all shadow-lg hover:shadow-xl"
               >
                 Donate Now
-              </motion.button>
-              
-              <motion.button
-                className="bg-white/20 backdrop-blur-sm hover:bg-white/30 text-white border-2 border-white/30 px-8 py-4 rounded-full text-lg font-semibold transition-all"
-                whileHover={{ scale: 1.05, y: -3 }}
-                whileTap={{ scale: 0.95 }}
+              </button>              <button 
                 onClick={() => document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' })}
+                className="bg-white hover:bg-gray-50 text-gray-800 px-8 py-3 rounded-full font-semibold transition-all border-2 border-gray-200"
               >
                 Learn More
-              </motion.button>
-            </motion.div>
-          </motion.div>
-
-          {/* Stats Section */}
-          <motion.div 
-            className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto"
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.8 }}
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 text-center border border-white/20"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.9 + index * 0.1 }}
-                whileHover={{ scale: 1.05, y: -5 }}
+              </button>              <button                onClick={() => document.getElementById('temple-address')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
+                className="bg-white hover:bg-gray-50 text-gray-800 px-8 py-3 rounded-full font-semibold transition-all border-2 border-gray-200 flex items-center gap-2"
               >
-                <div className="w-12 h-12 bg-accent rounded-full flex items-center justify-center mx-auto mb-3">
-                  <stat.icon className="w-6 h-6 text-white" />
-                </div>
-                <div className="text-2xl md:text-3xl font-bold mb-1">{stat.value}</div>
-                <div className="text-sm md:text-base text-white/80">{stat.label}</div>
-              </motion.div>
-            ))}
+                <MapPin className="w-5 h-5" />
+                Temple Location
+              </button>
+            </motion.div>
+          </div>
+
+          {/* Right Content - Temple Image */}
+          <motion.div
+            className="relative hidden lg:block"
+            initial={{ opacity: 0, x: 50 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 1 }}
+          >
+            <div className="relative w-full aspect-[3/4] rounded-3xl overflow-hidden shadow-2xl">
+              <img 
+                src="./image/pandit.jpg"
+                alt="Temple Priest"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            </div>
+            
+            {/* Floating Stats Card */}
+          
           </motion.div>
         </div>
       </div>
-
-      {/* Scroll Indicator */}
-      <motion.div 
-        className="absolute bottom-8 left-1/2 transform -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <div className="w-6 h-10 border-2 border-white/50 rounded-full flex justify-center">
-          <div className="w-1 h-3 bg-white/70 rounded-full mt-2 animate-bounce-gentle" />
-        </div>
-      </motion.div>
     </section>
   );
 };

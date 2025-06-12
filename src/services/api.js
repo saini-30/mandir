@@ -23,10 +23,27 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status;
+    const data = error.response?.data;
+
+    if (status === 401) {
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       window.location.href = '/admin/login';
+    } else if (status === 429) {
+      // Handle rate limiting
+      const retryAfter = error.response.headers['retry-after'];
+      const message = data.message || 'Too many requests. Please wait before trying again.';
+      error.message = retryAfter
+        ? `${message} Try again in ${Math.ceil(retryAfter / 60)} minutes.`
+        : message;
+    } else if (status === 423) {
+      // Handle account lockout
+      const lockUntil = data.lockUntil;
+      if (lockUntil) {
+        const waitMinutes = Math.ceil((new Date(lockUntil) - new Date()) / (1000 * 60));
+        error.message = `Account is locked. Please try again in ${waitMinutes} minutes.`;
+      }
     }
     return Promise.reject(error);
   }
@@ -44,8 +61,22 @@ export const eventsAPI = {
   getPublic: () => api.get('/events/public'),
   getPublicEvent: (slug) => api.get(`/events/public/${slug}`),
   getAdmin: (params) => api.get('/events/admin', { params }),
-  create: (data) => api.post('/events/admin', data),
-  update: (id, data) => api.put(`/events/admin/${id}`, data),
+  create: (data) => {
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    return api.post('/events/admin', data, config);
+  },
+  update: (id, data) => {
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    return api.put(`/events/admin/${id}`, data, config);
+  },
   delete: (id) => api.delete(`/events/admin/${id}`),
   setMain: (id) => api.patch(`/events/admin/${id}/main`),
 };
@@ -63,10 +94,26 @@ export const donationsAPI = {
 // Gallery API
 export const galleryAPI = {
   getPublic: (params) => api.get('/gallery/public', { params }),
+  getPinned: () => api.get('/gallery/public/pinned'),
   getAdmin: (params) => api.get('/gallery/admin', { params }),
-  create: (data) => api.post('/gallery/admin', data),
-  update: (id, data) => api.put(`/gallery/admin/${id}`, data),
+  create: (data) => {
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    return api.post('/gallery/admin', data, config);
+  },
+  update: (id, data) => {
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    return api.put(`/gallery/admin/${id}`, data, config);
+  },
   delete: (id) => api.delete(`/gallery/admin/${id}`),
+  togglePin: (id) => api.patch(`/gallery/admin/${id}/pin`),
 };
 
 // Payments API

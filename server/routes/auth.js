@@ -30,10 +30,12 @@ router.post('/login', async (req, res) => {
     }
 
     // Check if account is locked
-    if (user.isLocked) {
+    if (user.lockUntil && user.lockUntil > Date.now()) {
+      const waitMinutes = Math.ceil((user.lockUntil - Date.now()) / (1000 * 60));
       return res.status(423).json({
         success: false,
-        message: 'Account is locked. Please try again later.'
+        message: `Account is temporarily locked. Please try again in ${waitMinutes} minutes.`,
+        lockUntil: user.lockUntil
       });
     }
 
@@ -41,16 +43,20 @@ router.post('/login', async (req, res) => {
 
     if (!isPasswordValid) {
       user.loginAttempts += 1;
-      
       if (user.loginAttempts >= 5) {
         user.lockUntil = Date.now() + (30 * 60 * 1000); // 30 minutes
       }
       
       await user.save();
       
+      const attemptsLeft = 5 - user.loginAttempts;
       return res.status(401).json({
         success: false,
-        message: 'Invalid credentials'
+        message: user.loginAttempts >= 5 
+          ? 'Account has been locked for 30 minutes due to too many failed attempts.'
+          : `Invalid credentials. ${attemptsLeft} attempts remaining before account lockout.`,
+        attemptsLeft: Math.max(0, attemptsLeft),
+        lockUntil: user.lockUntil
       });
     }
 
