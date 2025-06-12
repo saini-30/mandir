@@ -14,15 +14,27 @@ import Footer from './components/Footer.jsx';
 const AdminPanel = lazy(() => import('./admin/AdminPanel'));
 
 // Main Website
+/**
+ * The main website component that renders the main sections of the website
+ * (Header, Hero, About, Events, Donation, Gallery, Contact, Footer)
+ */
 const MainWebsite = () => (
   <div className="min-h-screen bg-white">
+    {/* Header */}
     <Header />
+    {/* Hero Section */}
     <Hero />
+    {/* About Section */}
     <About />
+    {/* Events Section */}
     <Events />
+    {/* Donation Section */}
     <Donation />
+    {/* Gallery Section */}
     <Gallery />
+    {/* Contact Section */}
     <Contact />
+    {/* Footer */}
     <Footer />
   </div>
 );
@@ -30,7 +42,7 @@ const MainWebsite = () => (
 // Full Gallery Page
 const GalleryPage = () => (
   <div className="min-h-screen bg-white">
-   
+    <Header />
     <AllGallery />
     <Footer />
   </div>
