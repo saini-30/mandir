@@ -69,7 +69,7 @@ const About = () => {
           >
             <div className="relative rounded-3xl overflow-hidden shadow-2xl">
               <img 
-                src="https://images.pexels.com/photos/8633095/pexels-photo-8633095.jpeg?auto=compress&cs=tinysrgb&w=800"
+                src="./image/about.jpg"
                 alt="Temple interior with devotees"
                 className="w-full h-96 object-cover"
               />
