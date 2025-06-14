@@ -3,7 +3,8 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import Donation from '../models/Donation.js';
 import Event from '../models/Event.js';
-
+import dotenv from 'dotenv';
+dotenv.config();
 const router = express.Router();
 
 // Initialize Razorpay

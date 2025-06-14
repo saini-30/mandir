@@ -89,13 +89,23 @@ const Hero = () => {
               <img 
                 src="./image/pandit.jpg"
                 alt="Temple Priest"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover  small-image"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
             </div>
             
+            
             {/* Floating Stats Card */}
-          
+            <motion.div
+              className="absolute bottom-4 right-4 bg-white rounded-lg shadow-lg p-4"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <h3 className="font-semibold text-gray-800">Temple Stats</h3>
+              <p className="text-sm text-gray-600">Total Donations: $10,000</p>
+              <p className="text-sm text-gray-600">Monthly Visitors: 1,200</p>
+            </motion.div>
           </motion.div>
         </div>
       </div>
